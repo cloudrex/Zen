@@ -24,19 +24,19 @@ export default class Lexer implements IDisposable {
                 this.append();
             }
             else {
-                this.unexpected()
+                this.unexpected();
             }
         }
 
         return this.tree;
     }
 
-    private get at(): string {
-        return this.pos.toString();
+    private unexpected(char: string = this.$, at: number = this.pos): void {
+        throw new Error(`Unexpected character '${char}' at position ${at}`);
     }
 
-    private unexpected(char: string = this.$, at: string = this.at): void {
-        throw new Error();
+    private expecting(char: string, at: number = this.pos): void {
+        throw new Error(`Expecting character '${char}' at position ${at}`);
     }
 
     private append(): this {

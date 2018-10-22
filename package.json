@@ -1,0 +1,21 @@
+{
+    "name": "zen",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "build": "tsc",
+        "start": "npm run build"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/cloudrex/zen.git"
+    },
+    "keywords": [],
+    "author": "CloudRex <cloudrex@outlook.com>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/cloudrex/zen/issues"
+    },
+    "homepage": "https://github.com/cloudrex/zen#readme"
+}

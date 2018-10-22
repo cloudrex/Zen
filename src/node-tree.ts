@@ -5,7 +5,7 @@ export enum NodeType {
     NumberLiteral = "NBL"
 }
 
-export type NodeValue = string | number | any;
+export type NodeValue = string | number | any | undefined;
 
 export type TreeNode = {
     readonly type: NodeType;
@@ -41,6 +41,20 @@ export default class NodeTree {
         return typeof this.currentNode.value === "object" && Object.keys(this.currentNode.value).includes(name);
     }
 
+    public hasValue(): boolean {
+        return (typeof this.currentNode.value === "object" && Object.keys(this.currentNode.value).length > 0) || this.currentNode.value === undefined;
+    }
+
+    public setValue(value: NodeValue): this {
+        if (typeof value !== "object" && typeof value !== "string" && typeof value !== "number") {
+            throw new Error("An invalid value type was provided; Expecting either object, string, or number");
+        }
+
+        this.currentNode.value = value;
+
+        return this;
+    }
+
     public getChild(name: string): TreeNode {
         if (!this.hasChild(name)) {
             throw new Error(`Current node does not have '${name}' as a child`);
@@ -67,6 +81,11 @@ export default class NodeTree {
         if (this.hasChild(name)) {
             throw new Error(`Child with name '${name}' already exists`);
         }
+        else if (!this.isTree()) {
+            throw new Error(`Cannot set child '${name}' when value is not a tree`);
+        }
+
+        this.currentNode.value[name] = node;
 
         return this;
     }
@@ -83,10 +102,18 @@ export default class NodeTree {
         return this;
     }
 
+    private isTree(): boolean {
+        return NodeTree.isTree(this.currentNode);
+    }
+
     public static createEmptyNode(type: NodeType): TreeNode {
         return {
             type,
             value: {}
         };
+    }
+
+    public static isTree(node: TreeNode): boolean {
+        return typeof node.value === "object";
     }
 }

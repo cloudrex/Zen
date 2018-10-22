@@ -6,6 +6,7 @@ export enum ConsumeType {
 }
 
 const $char: RegExp = /[a-z]/i;
+const $white: RegExp = /[\s]/;
 
 export default class Lexer implements IDisposable {
     private readonly code: string;
@@ -35,20 +36,34 @@ export default class Lexer implements IDisposable {
                 this.append();
             }
             // String Literal -> -End
-            else if (this.$ === "\"" && this.buffer[0] === "\"" && this.buffer.length > 1) {
+            else if (this.$ === "\"" && this.isStringLiteralBody()) {
                 this.consume(ConsumeType.LiteralString);
             }
             // Character
             else if ($char.test(this.$)) {
                 // String Literal Body
-                if (this.buffer[0] ===  "\"") {
+                if (this.isStringLiteralBody()) {
                     this.append();
+                }
+                else {
+                    this.unexpected();
+                }
+            }
+            // Whitespace
+            else if ($white.test(this.$)) {
+                if (this.isStringLiteralBody()) {
+                    this.append();
+                }
+                else {
+                    this.unexpected();
                 }
             }
             // Newline
             else if (this.$ === "\n") {
                 this.line++;
                 this.char = 0;
+
+                continue;
             }
             else {
                 this.unexpected();
@@ -101,6 +116,11 @@ export default class Lexer implements IDisposable {
 
     private get $(): string {
         return this.code[this.pos];
+    }
+
+    // Helpers
+    private isStringLiteralBody(): boolean {
+        return this.buffer[0] === "\"" && this.buffer.length > 1;
     }
 
     public dispose(): this {

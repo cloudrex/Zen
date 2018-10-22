@@ -5,19 +5,19 @@ export enum NodeType {
     NumberLiteral = "NBL"
 }
 
-export type NodeValue = string | number | any | undefined;
+export type INodeValue = string | number | any | undefined;
 
-export type TreeNode = {
+export type ITreeNode = {
     readonly type: NodeType;
 
-    value: NodeValue;
+    value: INodeValue;
 }
 
 export default class NodeTree {
-    private readonly tree: TreeNode;
-    private readonly path: TreeNode[];
+    private readonly tree: ITreeNode;
+    private readonly path: ITreeNode[];
 
-    private currentNode: TreeNode;
+    private currentNode: ITreeNode;
 
     public constructor() {
         this.tree = NodeTree.createEmptyNode(NodeType.Root);
@@ -29,7 +29,7 @@ export default class NodeTree {
         return this.currentNode.type === NodeType.Root;
     }
 
-    public getParent(): TreeNode {
+    public getParent(): ITreeNode {
         if (this.onRoot() || this.path.length - 2 < 0) {
             throw new RangeError("Canot get parent of root node");
         }
@@ -45,7 +45,7 @@ export default class NodeTree {
         return (typeof this.currentNode.value === "object" && Object.keys(this.currentNode.value).length > 0) || this.currentNode.value === undefined;
     }
 
-    public setValue(value: NodeValue): this {
+    public setValue(value: INodeValue): this {
         if (typeof value !== "object" && typeof value !== "string" && typeof value !== "number") {
             throw new Error("An invalid value type was provided; Expecting either object, string, or number");
         }
@@ -55,7 +55,7 @@ export default class NodeTree {
         return this;
     }
 
-    public getChild(name: string): TreeNode {
+    public getChild(name: string): ITreeNode {
         if (!this.hasChild(name)) {
             throw new Error(`Current node does not have '${name}' as a child`);
         }
@@ -77,12 +77,12 @@ export default class NodeTree {
         return this;
     }
 
-    public getChildren(): TreeNode[] {
+    public getChildren(): ITreeNode[] {
         if (!this.isTree()) {
             throw new Error("Cannot get children when value is not a tree");
         }
 
-        const children: TreeNode[] = [];
+        const children: ITreeNode[] = [];
         const keys: string[] = Object.keys(this.currentNode.value);
 
         for (let i: number = 0; i < keys.length; i++) {
@@ -92,7 +92,7 @@ export default class NodeTree {
         return children;
     }
 
-    public setChild(name: string, node: TreeNode): this {
+    public setChild(name: string, node: ITreeNode): this {
         if (this.hasChild(name)) {
             throw new Error(`Child with name '${name}' already exists`);
         }
@@ -121,14 +121,14 @@ export default class NodeTree {
         return NodeTree.isTree(this.currentNode);
     }
 
-    public static createEmptyNode(type: NodeType): TreeNode {
+    public static createEmptyNode(type: NodeType): ITreeNode {
         return {
             type,
             value: {}
         };
     }
 
-    public static isTree(node: TreeNode): boolean {
+    public static isTree(node: ITreeNode): boolean {
         return typeof node.value === "object";
     }
 }

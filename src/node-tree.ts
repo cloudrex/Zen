@@ -105,6 +105,17 @@ export default class NodeTree {
         return this;
     }
 
+    public setChildAndNav(name: string, node: ITreeNode): this {
+        this.setChild(name, node);
+        this.child(name);
+
+        return this;
+    }
+
+    public getTree(): ITreeNode {
+        return this.tree;
+    }
+
     private removeLastPath(): this {
         this.path.pop();
 

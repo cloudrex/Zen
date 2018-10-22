@@ -5,7 +5,7 @@
     "main": "index.js",
     "scripts": {
         "build": "tsc",
-        "start": "npm run build"
+        "start": "npm run build && node ./dist/runner.js"
     },
     "repository": {
         "type": "git",
@@ -17,5 +17,11 @@
     "bugs": {
         "url": "https://github.com/cloudrex/zen/issues"
     },
-    "homepage": "https://github.com/cloudrex/zen#readme"
+    "homepage": "https://github.com/cloudrex/zen#readme",
+    "bin": {
+        "zen": "dist/runner.js"
+    },
+    "dependencies": {
+        "@types/node": "^10.12.0"
+    }
 }

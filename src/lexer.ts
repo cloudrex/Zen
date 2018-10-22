@@ -11,12 +11,16 @@ export default class Lexer implements IDisposable {
     private readonly code: string;
 
     private pos: number;
+    private char: number;
+    private line: number;
     private nodes: NodeTree;
     private buffer: string;
 
     public constructor(code: string) {
         this.code = code;
         this.pos = 0;
+        this.char = 0;
+        this.line = 0;
         this.buffer = "";
         this.nodes = new NodeTree();
     }
@@ -26,20 +30,31 @@ export default class Lexer implements IDisposable {
         this.buffer = "";
 
         for (this.pos = 0; this.pos < this.code.length; this.pos++) {
+            // String Literal -> Start-
             if (this.$ === "\"" && !this.buffer) {
                 this.append();
             }
+            // String Literal -> -End
             else if (this.$ === "\"" && this.buffer[0] === "\"" && this.buffer.length > 1) {
                 this.consume(ConsumeType.LiteralString);
             }
+            // Character
             else if ($char.test(this.$)) {
+                // String Literal Body
                 if (this.buffer[0] ===  "\"") {
                     this.append();
                 }
             }
+            // Newline
+            else if (this.$ === "\n") {
+                this.line++;
+                this.char = 0;
+            }
             else {
                 this.unexpected();
             }
+
+            this.char++;
         }
 
         return this.nodes.getTree();
@@ -48,11 +63,11 @@ export default class Lexer implements IDisposable {
     private consume(type: ConsumeType): this {
         switch (type) {
             case ConsumeType.LiteralString: {
-                console.log("once");
-
                 this.nodes.setChild(this.name(NodeType.StringLiteral), {
                     type: NodeType.StringLiteral,
-                    value: this.buffer
+
+                    // Remove the " at the start
+                    value: this.buffer.substr(1)
                 });
 
                 break;
@@ -70,12 +85,12 @@ export default class Lexer implements IDisposable {
         return `${base}:${pos}`;
     }
 
-    private unexpected(char: string = this.$, at: number = this.pos): void {
-        throw new Error(`Unexpected character '${char}' at position ${at}`);
+    private unexpected(unexpected: string = this.$, line: number = this.line, char: number = this.char): void {
+        throw new Error(`Unexpected character '${unexpected}' at line ${line}:${unexpected}`);
     }
 
-    private expecting(char: string, at: number = this.pos): void {
-        throw new Error(`Expecting character '${char}' at position ${at}`);
+    private expecting(expected: string, line: number = this.line, char: number = this.char): void {
+        throw new Error(`Expecting character '${expected}' at line ${this.line}:${char}`);
     }
 
     private append(): this {

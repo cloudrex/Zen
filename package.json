@@ -1,6 +1,6 @@
 {
-    "name": "zen",
-    "version": "1.0.0",
+    "name": "@cloudrex/zen",
+    "version": "1.0.4",
     "description": "",
     "main": "index.js",
     "scripts": {

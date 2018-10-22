@@ -77,6 +77,21 @@ export default class NodeTree {
         return this;
     }
 
+    public getChildren(): TreeNode[] {
+        if (!this.isTree()) {
+            throw new Error("Cannot get children when value is not a tree");
+        }
+
+        const children: TreeNode[] = [];
+        const keys: string[] = Object.keys(this.currentNode.value);
+
+        for (let i: number = 0; i < keys.length; i++) {
+            children.push(this.currentNode.value[keys[i]]);
+        }
+
+        return children;
+    }
+
     public setChild(name: string, node: TreeNode): this {
         if (this.hasChild(name)) {
             throw new Error(`Child with name '${name}' already exists`);

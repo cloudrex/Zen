@@ -148,6 +148,7 @@ export default class Lexer implements IDisposable {
 
                 console.log(this.buffer);
                 this.memberCallSwitch = false;
+                this.nodes.parent();
 
                 break;
             }

@@ -2,4 +2,4 @@
 "hello world"
 "hello there"
 out("hello")
-test("hi")
+test()

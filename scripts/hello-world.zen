@@ -1,3 +1,5 @@
 "hello"
 "hello world"
-"hello there
+"hello there"
+out("hello")
+test("hi")

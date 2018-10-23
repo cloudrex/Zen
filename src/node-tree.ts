@@ -1,6 +1,7 @@
 export enum NodeType {
     Root = "PRN",
     MethodCall = "MEC",
+    MethodParameter = "MEP",
     StringLiteral = "STL",
     NumberLiteral = "NBL"
 }

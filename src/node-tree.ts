@@ -116,6 +116,10 @@ export default class NodeTree {
         return this.tree;
     }
 
+    public getCurrent(): ITreeNode {
+        return this.currentNode;
+    }
+
     private removeLastPath(): this {
         this.path.pop();
 

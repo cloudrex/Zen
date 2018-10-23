@@ -43,7 +43,7 @@ export default class Lexer implements IDisposable {
             }
             // Character
             else if ($char.test(this.$)) {
-                // String Literal Body
+                // Character -> String Literal Body
                 if (this.isStringLiteralBody()) {
                     this.append();
                 }
@@ -57,7 +57,7 @@ export default class Lexer implements IDisposable {
                     this.append();
                 }
                 else {
-                    this.unexpected();
+                    continue;
                 }
             }
             // Newline
@@ -134,7 +134,7 @@ export default class Lexer implements IDisposable {
 
     // Helpers
     private isStringLiteralBody(): boolean {
-        return this.buffer[0] === "\"" && this.buffer.length > 1;
+        return this.buffer[0] === "\"" && this.buffer.length >= 1;
     }
 
     public dispose(): this {

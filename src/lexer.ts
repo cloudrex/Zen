@@ -1,14 +1,15 @@
 import {IDisposable} from "./structures";
-import NodeTree, {ITreeNode, NodeType} from "./node-tree";
+import NodeTree, {ITreeNode, NodeTreeEvent, NodeType} from "./node-tree";
 
 export enum ConsumeType {
-    LiteralString,
+    StringLiteral,
     MemberCallStart,
     MemberCallEnd
 }
 
 const $char: RegExp = /[a-z]/i;
-const $member: RegExp = /[a-z]+|[a-z]+\(/i;
+const $member: RegExp = /^[a-z]+$/i;
+const $methodCall: RegExp = /^[a-z]+\($/i;
 const $num: RegExp = /[0-9]/;
 const $white: RegExp = /[\s\t]/;
 
@@ -21,6 +22,9 @@ export default class Lexer implements IDisposable {
     private nodes: NodeTree;
     private buffer: string;
 
+    // Buffers
+    private lineBuffer: string;
+
     // Switches
     private memberCallSwitch: boolean;
 
@@ -32,15 +36,27 @@ export default class Lexer implements IDisposable {
         this.buffer = "";
         this.nodes = new NodeTree();
 
+        // Buffers
+        this.lineBuffer = "";
+
         // Switches
         this.memberCallSwitch = false;
     }
 
     public lex(): ITreeNode {
+        // Events
+        // TODO: Somehow not working
+        this.nodes.on(NodeTreeEvent.NodeChange, (node: ITreeNode) => {
+            console.log("\n");
+        });
+
         this.char = 1;
         this.line = 1;
         this.nodes = new NodeTree();
         this.buffer = "";
+
+        // Buffers
+        this.lineBuffer = "";
 
         // Switches
         this.memberCallSwitch = false;
@@ -49,6 +65,10 @@ export default class Lexer implements IDisposable {
             // End but expecting string literal end
             if (this.isEnd() && this.isStringLiteralBody()) {
                 this.expecting("\"");
+            }
+            // End but expecting method call start
+            else if (this.isEnd() && this.isMethodCall()) {
+                this.expecting("(");
             }
             // End but expecting method call end
             else if (this.isEnd() && this.memberCallSwitch) {
@@ -59,11 +79,11 @@ export default class Lexer implements IDisposable {
                 this.append();
             }
             // String Literal -> -End
-            else if (this.$ === "\"" && (this.isStringLiteralBody() || this.isMember())) {
-                this.consume(ConsumeType.LiteralString);
+            else if (this.$ === "\"" && this.isStringLiteralBody()) {
+                this.consume(ConsumeType.StringLiteral);
             }
             // Member Call -> Open
-            else if (this.$ === "(" || this.$ === ")" && this.isMember(this.buffer)) {
+            else if (this.$ === "(" || this.$ === ")" && this.isMethodCall(this.buffer + this.$)) {
                 this.append();
                 this.consume(ConsumeType.MemberCallStart);
             }
@@ -77,7 +97,8 @@ export default class Lexer implements IDisposable {
                 if (this.isStringLiteralBody()) {
                     this.append();
                 }
-                else if (this.isMember() || $num.test(this.$) || !this.buffer) {
+                // Character -> Member start
+                else if (this.isMember() || !this.buffer) {
                     this.append();
                 }
                 else {
@@ -92,6 +113,9 @@ export default class Lexer implements IDisposable {
             else if (this.isNewline()) {
                 this.line++;
                 this.char = 0;
+
+                // TODO: Inefficient (.split)
+                this.lineBuffer = this.code.split("\n")[this.line - 1];
 
                 continue;
             }
@@ -118,23 +142,26 @@ export default class Lexer implements IDisposable {
         let reset: boolean = true;
 
         switch (type) {
-            case ConsumeType.LiteralString: {
-                console.log("LITERAL STRING | BUFFER", this.buffer);
+            case ConsumeType.StringLiteral: {
+                // Remove the " at the start
+                const value: string = this.buffer.substr(1);
+
+                console.log("STRING LITERAL |", value);
 
                 this.nodes.setChild(this.name(NodeType.StringLiteral), {
                     type: NodeType.StringLiteral,
-
-                    // Remove the " at the start
-                    value: this.buffer.substr(1)
+                    value
                 });
 
                 break;
             }
 
             case ConsumeType.MemberCallStart: {
-                const methodName: string = this.buffer;
+                const methodName: string = this.buffer.replace("(", "");
 
-                this.nodes.setChildAndNav(this.name(methodName.replace("(", "")), {
+                console.log("MEMBER CALL START |", methodName);
+
+                this.nodes.setChildAndNav(this.name(methodName), {
                     type: NodeType.MethodCall,
                     value: {}
                 });
@@ -145,9 +172,7 @@ export default class Lexer implements IDisposable {
             }
 
             case ConsumeType.MemberCallEnd: {
-                console.log("METHOD CALL CLOSE");
-
-                console.log(this.buffer);
+                console.log("MEMBER CALL END");
                 this.memberCallSwitch = false;
                 this.nodes.parent();
 
@@ -209,6 +234,10 @@ export default class Lexer implements IDisposable {
 
     private isMember(buffer: string = this.buffer): boolean {
         return !this.isNewline(buffer) && !this.isStringLiteralBody(buffer) && $member.test(buffer);
+    }
+
+    private isMethodCall(buffer: string = this.buffer): boolean {
+        return !this.isNewline(buffer) && !this.isStringLiteralBody(buffer) && $methodCall.test(buffer);
     }
 
     public dispose(): this {

@@ -1,3 +1,10 @@
+import {EventEmitter} from "events";
+import {IDisposable} from "./structures";
+
+export enum NodeTreeEvent {
+    NodeChange = "nodeChange"
+}
+
 export enum NodeType {
     Root = "PRN",
     MethodCall = "MEC",
@@ -14,13 +21,15 @@ export type ITreeNode = {
     value: INodeValue;
 }
 
-export default class NodeTree {
+export default class NodeTree extends EventEmitter implements IDisposable {
     private readonly tree: ITreeNode;
     private readonly path: ITreeNode[];
 
     private currentNode: ITreeNode;
 
     public constructor() {
+        super();
+
         this.tree = NodeTree.createEmptyNode(NodeType.Root);
         this.currentNode = this.tree;
         this.path = [this.currentNode];
@@ -32,7 +41,7 @@ export default class NodeTree {
 
     public getParent(): ITreeNode {
         if (this.onRoot() || this.path.length - 2 < 0) {
-            throw new RangeError("Canot get parent of root node");
+            throw new RangeError("Cannot get parent of root node");
         }
 
         return this.path[this.path.length - 2];
@@ -66,6 +75,7 @@ export default class NodeTree {
 
     public parent(): this {
         this.currentNode = this.getParent();
+        this.emit(NodeTreeEvent.NodeChange, this.currentNode);
         this.removeLastPath();
 
         return this;
@@ -73,6 +83,7 @@ export default class NodeTree {
 
     public child(name: string): this {
         this.currentNode = this.getChild(name);
+        this.emit(NodeTreeEvent.NodeChange, this.currentNode);
         this.pushNewPath();
 
         return this;
@@ -119,6 +130,10 @@ export default class NodeTree {
 
     public getCurrent(): ITreeNode {
         return this.currentNode;
+    }
+
+    public dispose(): void {
+        //
     }
 
     private removeLastPath(): this {

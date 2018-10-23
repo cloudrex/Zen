@@ -1,5 +1,6 @@
 "hello"
 "hello world"
 "hello there"
-out("hello")
+out("he4llo")
 test()
+hello()

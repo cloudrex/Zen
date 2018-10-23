@@ -9,6 +9,7 @@ export enum ConsumeType {
 
 const $char: RegExp = /[a-z]/i;
 const $member: RegExp = /[a-z]+|[a-z]+\(/i;
+const $num: RegExp = /[0-9]/;
 const $white: RegExp = /[\s\t]/;
 
 export default class Lexer implements IDisposable {
@@ -71,12 +72,12 @@ export default class Lexer implements IDisposable {
                 this.consume(ConsumeType.MemberCallEnd);
             }
             // Character
-            else if ($char.test(this.$)) {
+            else if ($char.test(this.$) || $num.test(this.$)) {
                 // Character -> String Literal Body
                 if (this.isStringLiteralBody()) {
                     this.append();
                 }
-                else if (this.isMember() || !this.buffer) {
+                else if (this.isMember() || $num.test(this.$) || !this.buffer) {
                     this.append();
                 }
                 else {

@@ -6,7 +6,7 @@ export enum ConsumeType {
 }
 
 const $char: RegExp = /[a-z]/i;
-const $white: RegExp = /[\s]/;
+const $white: RegExp = /[\s\t]/;
 
 export default class Lexer implements IDisposable {
     private readonly code: string;
@@ -51,6 +51,17 @@ export default class Lexer implements IDisposable {
                     this.unexpected();
                 }
             }
+            // Newline but expecting string literal end
+            else if (this.isNewline() && this.isStringLiteralBody()) {
+                this.expecting("\"");
+            }
+            // Newline
+            else if (this.isNewline()) {
+                this.line++;
+                this.char = 0;
+
+                continue;
+            }
             // Whitespace
             else if ($white.test(this.$)) {
                 if (this.isStringLiteralBody()) {
@@ -60,12 +71,9 @@ export default class Lexer implements IDisposable {
                     continue;
                 }
             }
-            // Newline
-            else if (this.$ === "\n") {
-                this.line++;
-                this.char = 0;
-
-                continue;
+            // End and expecting
+            else if (this.isEnd() && this.isStringLiteralBody()) {
+                this.expecting("\"");
             }
             else {
                 this.unexpected();
@@ -122,6 +130,12 @@ export default class Lexer implements IDisposable {
         return this;
     }
 
+    private isEnd(): boolean {
+        console.log(this.pos, this.code.length);
+
+        return this.pos + 2 >= this.code.length;
+    }
+
     private append(): this {
         this.buffer += this.$;
 
@@ -135,6 +149,10 @@ export default class Lexer implements IDisposable {
     // Helpers
     private isStringLiteralBody(): boolean {
         return this.buffer[0] === "\"" && this.buffer.length >= 1;
+    }
+
+    private isNewline(): boolean {
+        return this.$ === "\n";
     }
 
     public dispose(): this {

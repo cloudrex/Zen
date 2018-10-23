@@ -20,13 +20,15 @@ export default class Lexer implements IDisposable {
     public constructor(code: string) {
         this.code = code;
         this.pos = 0;
-        this.char = 0;
-        this.line = 0;
+        this.char = 1;
+        this.line = 1;
         this.buffer = "";
         this.nodes = new NodeTree();
     }
 
     public lex(): ITreeNode {
+        this.char = 1;
+        this.line = 1;
         this.nodes = new NodeTree();
         this.buffer = "";
 
@@ -76,6 +78,8 @@ export default class Lexer implements IDisposable {
     }
 
     private consume(type: ConsumeType): this {
+        let reset: boolean = true;
+
         switch (type) {
             case ConsumeType.LiteralString: {
                 this.nodes.setChild(this.name(NodeType.StringLiteral), {
@@ -93,6 +97,10 @@ export default class Lexer implements IDisposable {
             }
         }
 
+        if (reset) {
+            this.reset();
+        }
+
         return this;
     }
 
@@ -101,11 +109,17 @@ export default class Lexer implements IDisposable {
     }
 
     private unexpected(unexpected: string = this.$, line: number = this.line, char: number = this.char): void {
-        throw new Error(`Unexpected character '${unexpected}' at line ${line}:${unexpected}`);
+        throw new Error(`Unexpected character '${unexpected}' at line ${line}:${char}`);
     }
 
     private expecting(expected: string, line: number = this.line, char: number = this.char): void {
         throw new Error(`Expecting character '${expected}' at line ${this.line}:${char}`);
+    }
+
+    private reset(): this {
+        this.buffer = "";
+
+        return this;
     }
 
     private append(): this {

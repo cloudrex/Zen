@@ -2,7 +2,8 @@
 
 import fs from "fs";
 import Lexer from "./lexer";
-import {ITreeNode} from "./node-tree";
+import NodeTree from "./node-tree";
+import Interpreter from "./interpreter";
 
 const args: string[] = [...process.argv];
 
@@ -19,6 +20,10 @@ console.log(targetFile);
 
 const code: string = fs.readFileSync(targetFile).toString();
 const lexer: Lexer = new Lexer(code);
-const tree: ITreeNode = lexer.lex();
+const tree: NodeTree = lexer.lex();
 
-console.log(JSON.stringify(tree));
+console.log(`\nInterpreting ${tree.getSize()} nodes ...\n`);
+
+const interpreter: Interpreter = new Interpreter(tree);
+
+interpreter.interpret();

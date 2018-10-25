@@ -22,6 +22,9 @@ hello(
 
 hello)
 
+# Method call space (NOT an error?)
+hell o()
+
 # String start (method call)
 
 hello(hello")

@@ -43,7 +43,7 @@ export default class Lexer implements IDisposable {
         this.memberCallSwitch = false;
     }
 
-    public lex(): ITreeNode {
+    public lex(): NodeTree {
         // Events
         // TODO: Somehow not working
         this.nodes.on(NodeTreeEvent.NodeChange, (node: ITreeNode) => {
@@ -74,8 +74,13 @@ export default class Lexer implements IDisposable {
             else if (this.isEnd() && this.memberCallSwitch) {
                 this.expecting(")");
             }
+            // Member Call -> Next argument
+            else if (this.$ === "," && this.memberCallSwitch) {
+                console.log("MEMBER CALL COMMA");
+                this.reset();
+            }
             // String Literal -> Start-
-            if (this.$ === "\"" && !this.buffer) {
+            else if (this.$ === "\"" && !this.buffer) {
                 this.append();
             }
             // String Literal -> -End
@@ -135,7 +140,7 @@ export default class Lexer implements IDisposable {
             this.char++;
         }
 
-        return this.nodes.getTree();
+        return this.nodes;
     }
 
     private consume(type: ConsumeType): this {
@@ -146,10 +151,14 @@ export default class Lexer implements IDisposable {
                 // Remove the " at the start
                 const value: string = this.buffer.substr(1);
 
+                const name: string = this.name(NodeType.StringLiteral);
+
                 console.log("STRING LITERAL |", value);
 
-                this.nodes.setChild(this.name(NodeType.StringLiteral), {
+                this.nodes.setChild(name, {
                     type: NodeType.StringLiteral,
+                    name,
+                    position: this.pos,
                     value
                 });
 
@@ -158,11 +167,14 @@ export default class Lexer implements IDisposable {
 
             case ConsumeType.MemberCallStart: {
                 const methodName: string = this.buffer.replace("(", "");
+                const name: string = this.name(methodName);
 
                 console.log("MEMBER CALL START |", methodName);
 
-                this.nodes.setChildAndNav(this.name(methodName), {
+                this.nodes.setChildAndNav(name, {
                     type: NodeType.MethodCall,
+                    name,
+                    position: this.pos,
                     value: {}
                 });
 

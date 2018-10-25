@@ -13,10 +13,16 @@ export enum NodeType {
     NumberLiteral = "NBL"
 }
 
+export enum SpecialNodes {
+    Root = "$Root"
+}
+
 export type INodeValue = string | number | any | undefined;
 
 export type ITreeNode = {
     readonly type: NodeType;
+    readonly name: NodeType | string;
+    readonly position: number;
 
     value: INodeValue;
 }
@@ -26,13 +32,15 @@ export default class NodeTree extends EventEmitter implements IDisposable {
     private readonly path: ITreeNode[];
 
     private currentNode: ITreeNode;
+    private size: number;
 
     public constructor() {
         super();
 
-        this.tree = NodeTree.createEmptyNode(NodeType.Root);
+        this.tree = NodeTree.createEmptyNode(NodeType.Root, SpecialNodes.Root, -1);
         this.currentNode = this.tree;
         this.path = [this.currentNode];
+        this.size = 0;
     }
 
     public onRoot(): boolean {
@@ -62,6 +70,10 @@ export default class NodeTree extends EventEmitter implements IDisposable {
 
         this.currentNode.value = value;
 
+        if (typeof value === "object") {
+            this.size++;
+        }
+
         return this;
     }
 
@@ -90,18 +102,11 @@ export default class NodeTree extends EventEmitter implements IDisposable {
     }
 
     public getChildren(): ITreeNode[] {
-        if (!this.isTree()) {
-            throw new Error("Cannot get children when value is not a tree");
-        }
+        return NodeTree.getChildren(this.currentNode);
+    }
 
-        const children: ITreeNode[] = [];
-        const keys: string[] = Object.keys(this.currentNode.value);
-
-        for (let i: number = 0; i < keys.length; i++) {
-            children.push(this.currentNode.value[keys[i]]);
-        }
-
-        return children;
+    public getSize(): number {
+        return this.size;
     }
 
     public setChild(name: string, node: ITreeNode): this {
@@ -113,6 +118,7 @@ export default class NodeTree extends EventEmitter implements IDisposable {
         }
 
         this.currentNode.value[name] = node;
+        this.size++;
 
         return this;
     }
@@ -152,11 +158,28 @@ export default class NodeTree extends EventEmitter implements IDisposable {
         return NodeTree.isTree(this.currentNode);
     }
 
-    public static createEmptyNode(type: NodeType): ITreeNode {
+    public static createEmptyNode(type: NodeType, name: string, position: number): ITreeNode {
         return {
             type,
+            name,
+            position,
             value: {}
         };
+    }
+
+    public static getChildren(node: ITreeNode): ITreeNode[] {
+        if (!NodeTree.isTree(node)) {
+            throw new Error("Cannot get children when value is not a tree");
+        }
+
+        const children: ITreeNode[] = [];
+        const keys: string[] = Object.keys(node.value);
+
+        for (let i: number = 0; i < keys.length; i++) {
+            children.push(node.value[keys[i]]);
+        }
+
+        return children;
     }
 
     public static isTree(node: ITreeNode): boolean {

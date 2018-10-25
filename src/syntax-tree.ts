@@ -1,11 +1,11 @@
 import {EventEmitter} from "events";
 import {IDisposable} from "./structures";
 
-export enum NodeTreeEvent {
+export enum SyntaxTreeEvent {
     NodeChange = "nodeChange"
 }
 
-export enum NodeType {
+export enum SyntaxNodeType {
     Root = "PRN",
     MethodCall = "MEC",
     MethodParameter = "MEP",
@@ -13,41 +13,41 @@ export enum NodeType {
     NumberLiteral = "NBL"
 }
 
-export enum SpecialNodes {
+export enum SpecialSyntaxNodes {
     Root = "$Root"
 }
 
-export type INodeValue = string | number | any | undefined;
+export type ISyntaxNodeValue = string | number | any | undefined;
 
-export type ITreeNode = {
-    readonly type: NodeType;
-    readonly name: NodeType | string;
+export type ISyntaxNode = {
+    readonly type: SyntaxNodeType;
+    readonly name: SyntaxNodeType | string;
     readonly position: number;
 
-    value: INodeValue;
+    value: ISyntaxNodeValue;
 }
 
-export default class NodeTree extends EventEmitter implements IDisposable {
-    private readonly tree: ITreeNode;
-    private readonly path: ITreeNode[];
+export default class SyntaxTree extends EventEmitter implements IDisposable {
+    private readonly tree: ISyntaxNode;
+    private readonly path: ISyntaxNode[];
 
-    private currentNode: ITreeNode;
+    private currentNode: ISyntaxNode;
     private size: number;
 
     public constructor() {
         super();
 
-        this.tree = NodeTree.createEmptyNode(NodeType.Root, SpecialNodes.Root, -1);
+        this.tree = SyntaxTree.createEmptyNode(SyntaxNodeType.Root, SpecialSyntaxNodes.Root, -1);
         this.currentNode = this.tree;
         this.path = [this.currentNode];
         this.size = 0;
     }
 
     public onRoot(): boolean {
-        return this.currentNode.type === NodeType.Root;
+        return this.currentNode.type === SyntaxNodeType.Root;
     }
 
-    public getParent(): ITreeNode {
+    public getParent(): ISyntaxNode {
         if (this.onRoot() || this.path.length - 2 < 0) {
             throw new RangeError("Cannot get parent of root node");
         }
@@ -63,7 +63,7 @@ export default class NodeTree extends EventEmitter implements IDisposable {
         return (typeof this.currentNode.value === "object" && Object.keys(this.currentNode.value).length > 0) || this.currentNode.value === undefined;
     }
 
-    public setValue(value: INodeValue): this {
+    public setValue(value: ISyntaxNodeValue): this {
         if (typeof value !== "object" && typeof value !== "string" && typeof value !== "number") {
             throw new Error("An invalid value type was provided; Expecting either object, string, or number");
         }
@@ -77,7 +77,7 @@ export default class NodeTree extends EventEmitter implements IDisposable {
         return this;
     }
 
-    public getChild(name: string): ITreeNode {
+    public getChild(name: string): ISyntaxNode {
         if (!this.hasChild(name)) {
             throw new Error(`Current node does not have '${name}' as a child`);
         }
@@ -87,7 +87,7 @@ export default class NodeTree extends EventEmitter implements IDisposable {
 
     public parent(): this {
         this.currentNode = this.getParent();
-        this.emit(NodeTreeEvent.NodeChange, this.currentNode);
+        this.emit(SyntaxTreeEvent.NodeChange, this.currentNode);
         this.removeLastPath();
 
         return this;
@@ -95,21 +95,21 @@ export default class NodeTree extends EventEmitter implements IDisposable {
 
     public child(name: string): this {
         this.currentNode = this.getChild(name);
-        this.emit(NodeTreeEvent.NodeChange, this.currentNode);
+        this.emit(SyntaxTreeEvent.NodeChange, this.currentNode);
         this.pushNewPath();
 
         return this;
     }
 
-    public getChildren(): ITreeNode[] {
-        return NodeTree.getChildren(this.currentNode);
+    public getChildren(): ISyntaxNode[] {
+        return SyntaxTree.getChildren(this.currentNode);
     }
 
     public getSize(): number {
         return this.size;
     }
 
-    public setChild(name: string, node: ITreeNode): this {
+    public setChild(name: string, node: ISyntaxNode): this {
         if (this.hasChild(name)) {
             throw new Error(`Child with name '${name}' already exists`);
         }
@@ -123,18 +123,18 @@ export default class NodeTree extends EventEmitter implements IDisposable {
         return this;
     }
 
-    public setChildAndNav(name: string, node: ITreeNode): this {
+    public setChildAndNav(name: string, node: ISyntaxNode): this {
         this.setChild(name, node);
         this.child(name);
 
         return this;
     }
 
-    public getTree(): ITreeNode {
+    public getTree(): ISyntaxNode {
         return this.tree;
     }
 
-    public getCurrent(): ITreeNode {
+    public getCurrent(): ISyntaxNode {
         return this.currentNode;
     }
 
@@ -155,10 +155,10 @@ export default class NodeTree extends EventEmitter implements IDisposable {
     }
 
     private isTree(): boolean {
-        return NodeTree.isTree(this.currentNode);
+        return SyntaxTree.isTree(this.currentNode);
     }
 
-    public static createEmptyNode(type: NodeType, name: string, position: number): ITreeNode {
+    public static createEmptyNode(type: SyntaxNodeType, name: string, position: number): ISyntaxNode {
         return {
             type,
             name,
@@ -167,12 +167,12 @@ export default class NodeTree extends EventEmitter implements IDisposable {
         };
     }
 
-    public static getChildren(node: ITreeNode): ITreeNode[] {
-        if (!NodeTree.isTree(node)) {
+    public static getChildren(node: ISyntaxNode): ISyntaxNode[] {
+        if (!SyntaxTree.isTree(node)) {
             throw new Error("Cannot get children when value is not a tree");
         }
 
-        const children: ITreeNode[] = [];
+        const children: ISyntaxNode[] = [];
         const keys: string[] = Object.keys(node.value);
 
         for (let i: number = 0; i < keys.length; i++) {
@@ -182,7 +182,7 @@ export default class NodeTree extends EventEmitter implements IDisposable {
         return children;
     }
 
-    public static isTree(node: ITreeNode): boolean {
+    public static isTree(node: ISyntaxNode): boolean {
         return typeof node.value === "object";
     }
 }

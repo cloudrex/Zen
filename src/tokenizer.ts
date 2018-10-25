@@ -73,7 +73,7 @@ const $identifier = /[a-z]/i;
 
 export default class Tokenizer {
     private readonly input: string;
-    
+
     private pos: number;
 
     public constructor(input: string) {
@@ -285,7 +285,7 @@ export default class Tokenizer {
         // TODO: Separate into 2 methods
         while (expression.test(this.input[counter]) !== equals) {
             collection += this.input[counter];
-            
+
             if (counter + 1 >= this.input.length && returnOnEnd) {
                 return collection;
             }

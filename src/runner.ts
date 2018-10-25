@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 
 import fs from "fs";
-import Lexer from "./lexer";
-import NodeTree from "./node-tree";
-import Interpreter from "./interpreter";
+import Tokenizer from "./tokenizer";
 
 const args: string[] = [...process.argv];
 
@@ -19,11 +17,6 @@ if (!fs.existsSync(targetFile)) {
 console.log(targetFile);
 
 const code: string = fs.readFileSync(targetFile).toString();
-const lexer: Lexer = new Lexer(code);
-const tree: NodeTree = lexer.lex();
+const tokenizer = new Tokenizer(code);
 
-console.log(`\nInterpreting ${tree.getSize()} nodes ...\n`);
-
-const interpreter: Interpreter = new Interpreter(tree);
-
-interpreter.interpret();
+console.log(tokenizer.tokenize());

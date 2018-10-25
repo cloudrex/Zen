@@ -1,4 +1,5 @@
 export enum TokenType {
+    Quote,
     BracketLeft,
     BracketRight,
     BraceLeft,
@@ -6,7 +7,7 @@ export enum TokenType {
     ParenthesesLeft,
     ParenthesesRight,
     Comma,
-    Semicolon,
+    SemiColon,
     Colon,
     Dot,
     Question,
@@ -32,7 +33,8 @@ export enum TokenType {
     Modulos,
     Star,
     Slash,
-    StarStar
+    StarStar,
+    NewLine
 }
 
 export enum KeywordTokenType {

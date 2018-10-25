@@ -34,7 +34,10 @@ export enum TokenType {
     Star,
     Slash,
     StarStar,
-    NewLine
+    NewLine,
+    FunctionKeyword,
+    Entity,
+    Whitespace
 }
 
 export enum KeywordTokenType {

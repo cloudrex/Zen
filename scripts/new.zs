@@ -1,1 +1,3 @@
-fun 
+if (something = true) {
+    !(hello)   
+}

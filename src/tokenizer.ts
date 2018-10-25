@@ -8,15 +8,63 @@ export type IToken = {
 }
 
 export enum TokenMatch {
-    Quote = "\"",
+    StringLiteralQuote = "\"",
     NewLine = "\n",
     SemiColon = ";",
-    FunctionKeyword = "fun",
-    AddOperator = "+",
-    SubstractOperator = "-",
+    Whitespace = " ",
+    BraceStart = "{",
+    BraceEnd = "}",
+    ParenthesesStart = "(",
+    ParenthesesEnd = ")",
+    SingleLineComment = "//",
+
+    // Operators
+    AdditionOperator = "+",
+    SubstractionOperator = "-",
     MultiplyOperator = "*",
     ExponentOperator = "**",
-    Whitespace = " "
+    DivisionOperator = "/",
+    ModuloOperator = "%",
+    GreaterThanOperator = ">",
+    GreaterOrEqualToOperator = ">=",
+    LessThanOperator = "<",
+    LessOrEqualToOperator = "<=",
+    AsignmentOperator = "=",
+    EqualToOperator = "==",
+    EqualValueAndTypeOperator = "===",
+    NotEqualToOperator = "!=",
+    NotValueNorTypeEqualOperator = "!==",
+    LogicalAndOperator = "&&",
+    LogicalOrOperator = "||",
+    LogicalNotOperator = "!",
+
+    // Keywords
+    FunctionKeyword = "function",
+    IfKeyword = "if",
+    WhileKeyword = "while",
+    ReturnKeyword = "return",
+    BreakKeyword = "break",
+    CaseKeyword = "case",
+    CatchKeyword = "catch",
+    ContinueKeyword = "continue",
+    Debugger = "debugger",
+    DefaultKeyword = "default",
+    DeleteKeyword = "delete",
+    DoKeyword = "do",
+    ElseKeyword = "else",
+    FinallyKeyword = "finally",
+    ForKeyword = "for",
+    InKeyword = "in",
+    InstanceofKeyword = "instanceof",
+    NewKeyword = "new",
+    SwitchKeyword = "switch",
+    ThisKeyword = "this",
+    ThrowKeyword = "throw",
+    TryKeyword = "try",
+    TypeofKeyword = "typeof",
+    VarKeyword = "var",
+    VoidKeyword = "void",
+    WithKeyword = "with"
 }
 
 // Patterns
@@ -38,7 +86,31 @@ export default class Tokenizer {
 
         for (this.pos = 0; this.pos < this.input.length; this.pos++) {
             switch (this.$) {
-                case TokenMatch.Quote: {
+                case TokenMatch.BraceStart: {
+                    tokens.push(this.createToken(TokenType.BlockStart));
+
+                    break;
+                }
+
+                case TokenMatch.BraceEnd: {
+                    tokens.push(this.createToken(TokenType.BlockEnd));
+
+                    break;
+                }
+
+                case TokenMatch.ParenthesesStart: {
+                    tokens.push(this.createToken(TokenType.ParenthesesStart));
+
+                    break;
+                }
+
+                case TokenMatch.ParenthesesEnd: {
+                    tokens.push(this.createToken(TokenType.ParenthesesEnd));
+
+                    break;
+                }
+
+                case TokenMatch.StringLiteralQuote: {
                     const value: string | null = this.collectUntilExpression($quoteBody, false, this.pos + 1);
 
                     if (value === null) {
@@ -65,15 +137,88 @@ export default class Tokenizer {
 
                 case TokenMatch.Whitespace: {
                     continue;
+                }
+
+                // Operators
+                case TokenMatch.AdditionOperator: {
+                    tokens.push(this.createToken(TokenType.AdditionOperator));
+
+                    break;
+                }
+
+                case TokenMatch.SubstractionOperator: {
+                    tokens.push(this.createToken(TokenType.SubstractionOperator));
+
+                    break;
+                }
+
+                case TokenMatch.ExponentOperator: {
+                    tokens.push(this.createToken(TokenType.ExponentOperator, undefined, this.pos + 2));
+                    this.skip();
+
+                    break;
+                }
+
+                case TokenMatch.DivisionOperator: {
+                    // Avoid single line comment
+                    if (this.forward() !== "/") {
+                        tokens.push(this.createToken(TokenType.DivisionOperator));
+
+                        break;
+                    }
+                }
+
+                case TokenMatch.ModuloOperator: {
+                    tokens.push(this.createToken(TokenType.ModuloOperator));
+
+                    break;
+                }
+
+                case TokenMatch.GreaterThanOperator: {
+                    // Avoid greater or equal to operator
+                    if (this.forward() !== "=") {
+                        tokens.push(this.createToken(TokenType.GreaterThanOperator));
+
+                        break;
+                    }
+                }
+
+                case TokenMatch.LessThanOperator: {
+                    // Avoid less or equal to operator
+                    if (this.forward() !== "=") {
+                        tokens.push(this.createToken(TokenType.LessThanOperator));
+
+                        break;
+                    }
+                }
+
+                case TokenMatch.LogicalNotOperator: {
+                    tokens.push(this.createToken(TokenType.LogicalNotOperator));
+
+                    break;
+                }
+
+                case TokenMatch.AsignmentOperator: {
+                    tokens.push(this.createToken(TokenType.AssignmentOperator));
 
                     break;
                 }
 
                 default: {
+                    // Keywords
                     if (this.matchToken(TokenMatch.FunctionKeyword)) {
                         tokens.push(this.createToken(TokenType.FunctionKeyword));
                         this.skip(TokenMatch.FunctionKeyword.length);
                     }
+                    else if (this.matchToken(TokenMatch.IfKeyword)) {
+                        tokens.push(this.createToken(TokenType.IfKeyword));
+                        this.skip(TokenMatch.IfKeyword.length);
+                    }
+                    else if (this.matchToken(TokenMatch.ElseKeyword)) {
+                        tokens.push(this.createToken(TokenType.ElseKeyword));
+                        this.skip(TokenMatch.ElseKeyword.length);
+                    }
+                    // Other
                     else if ($identifier.test(this.$)) {
                         const value: string | null = this.collectUntilExpression($identifier, false, this.pos, true);
 
@@ -81,7 +226,7 @@ export default class Tokenizer {
                             throw new Error("Unexpected end of file (collecting entity)");
                         }
 
-                        tokens.push(this.createToken(TokenType.Entity, value, this.pos + value.length));
+                        tokens.push(this.createToken(TokenType.Idenfitier, value, this.pos + value.length));
                         this.skip(value.length);
                     }
                     else {
@@ -103,7 +248,7 @@ export default class Tokenizer {
         return token === this.$;
     }
 
-    private forward(characters: number, start: number = this.pos): string | null {
+    private forward(characters: number = 1, start: number = this.pos): string | null {
         const end: number = start + characters;
 
         let collection: string = "";
@@ -125,7 +270,7 @@ export default class Tokenizer {
         return new Error(`Expecting ${message} | Position ${position}`);
     }
 
-    private skip(characters: number, offset: number = -1): this {
+    private skip(characters: number = 1, offset: number = -1): this {
         // TODO: Prevent overflow (EOF)
         this.pos += characters + offset;
 

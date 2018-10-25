@@ -1,1 +1,1 @@
-entity    e e
+fun 

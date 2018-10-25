@@ -21,7 +21,7 @@ export enum TokenMatch {
 
 // Patterns
 const $quoteBody = /[^"]/i;
-const $entity = /[a-z]/i;
+const $identifier = /[a-z]/i;
 
 export default class Tokenizer {
     private readonly input: string;
@@ -39,14 +39,14 @@ export default class Tokenizer {
         for (this.pos = 0; this.pos < this.input.length; this.pos++) {
             switch (this.$) {
                 case TokenMatch.Quote: {
-                    const value: string | null = this.collectUntil($quoteBody, false, this.pos + 1);
+                    const value: string | null = this.collectUntilExpression($quoteBody, false, this.pos + 1);
 
                     if (value === null) {
                         throw this.expecting("End of quote body");
                     }
 
-                    tokens.push(this.createToken(TokenType.Quote, value, this.pos + value.length));
-                    this.skip(value.length + 1);
+                    tokens.push(this.createToken(TokenType.Quote, value, this.pos + value.length + 1));
+                    this.skip(value.length + 2);
 
                     break;
                 }
@@ -64,17 +64,7 @@ export default class Tokenizer {
                 }
 
                 case TokenMatch.Whitespace: {
-                    const amount: string | null = this.collectUntil(TokenMatch.Whitespace, true);
-
-                    if (amount === null) {
-                        console.log(tokens);
-                        throw new Error("Unexpected end of file (collecting whitespace)");
-                    }
-
-                    console.log("amount: ", amount, `(${amount.length})`);
-
-                    tokens.push(this.createToken(TokenType.Whitespace, undefined, this.pos + amount.length));
-                    this.skip(amount.length);
+                    continue;
 
                     break;
                 }
@@ -84,11 +74,10 @@ export default class Tokenizer {
                         tokens.push(this.createToken(TokenType.FunctionKeyword));
                         this.skip(TokenMatch.FunctionKeyword.length);
                     }
-                    else if ($entity.test(this.$)) {
-                        const value: string | null = this.collectUntil($entity, false);
+                    else if ($identifier.test(this.$)) {
+                        const value: string | null = this.collectUntilExpression($identifier, false, this.pos, true);
 
                         if (value === null) {
-                            console.log(tokens);
                             throw new Error("Unexpected end of file (collecting entity)");
                         }
 
@@ -136,24 +125,47 @@ export default class Tokenizer {
         return new Error(`Expecting ${message} | Position ${position}`);
     }
 
-    private skip(characters: number): this {
+    private skip(characters: number, offset: number = -1): this {
         // TODO: Prevent overflow (EOF)
-        this.pos += characters;
+        this.pos += characters + offset;
 
         return this;
     }
 
     // TODO: Should consider EOF as a false match, and return what was collected
-    private collectUntil(expression: RegExp | string, equals: boolean = true, start: number = this.pos): string | null {
+    private collectUntilExpression(expression: RegExp, equals: boolean = true, start: number = this.pos, returnOnEnd: boolean = false): string | null {
         let counter: number = start;
         let collection: string = "";
 
         // TODO: Separate into 2 methods
-        while (expression instanceof RegExp ? expression.test(this.input[counter]) !== equals : (equals ? expression !== this.input[counter] : expression === this.input[counter])) {
+        while (expression.test(this.input[counter]) !== equals) {
             collection += this.input[counter];
             
-            if (counter + 1 >= this.input.length) {
-                return null;
+            if (counter + 1 >= this.input.length && returnOnEnd) {
+                return collection;
+            }
+            else if (counter + 1 >= this.input.length && !returnOnEnd) {
+                throw this.expecting("match before end of file");
+            }
+
+            counter++;
+        }
+
+        return collection;
+    }
+
+    private collectUntil(match: string, start: number = this.pos, returnOnEnd: boolean = false): string {
+        let counter: number = start;
+        let collection: string = "";
+
+        while (this.input[counter] !== match) {
+            collection += this.input[counter];
+
+            if (counter + 1 >= this.input.length && returnOnEnd) {
+                return collection;
+            }
+            else if (counter + 1 >= this.input.length && !returnOnEnd) {
+                throw this.expecting(`"character '${match}' before end of file`);
             }
 
             counter++;

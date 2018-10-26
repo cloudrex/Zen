@@ -114,13 +114,13 @@ export default class Tokenizer {
         for (this.pos = 0; this.pos < this.input.length; this.pos++, this.character++) {
             switch (this.$) {
                 case TokenMatch.BraceStart: {
-                    tokens.push(this.createToken(TokenType.BlockStart));
+                    tokens.push(this.createToken(TokenType.BraceStart));
 
                     break;
                 }
 
                 case TokenMatch.BraceEnd: {
-                    tokens.push(this.createToken(TokenType.BlockEnd));
+                    tokens.push(this.createToken(TokenType.BraceEnd));
 
                     break;
                 }
@@ -144,7 +144,7 @@ export default class Tokenizer {
                         errors.push(this.expecting("End of quote body"));
                     }
                     else {
-                        tokens.push(this.createToken(TokenType.Quote, value, this.pos + value.length + 1));
+                        tokens.push(this.createToken(TokenType.StringLiteralQuote, value, this.pos + value.length + 1));
                         this.skip(value.length + 2);
                     }
 
@@ -300,6 +300,8 @@ export default class Tokenizer {
                 }
             }
         }
+
+        tokens.push(this.createToken(TokenType.EndOfFile));
 
         return {
             tokens,

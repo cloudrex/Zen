@@ -6,11 +6,12 @@ export enum SyntaxTreeEvent {
 }
 
 export enum SyntaxNodeType {
-    Root = "PRN",
-    MethodCall = "MEC",
-    MethodParameter = "MEP",
-    StringLiteral = "STL",
-    NumberLiteral = "NBL"
+    Root,
+    Function,
+    FunctionCall,
+    FunctionParameter,
+    StringLiteral,
+    NumberLiteral
 }
 
 export enum SpecialSyntaxNodes {

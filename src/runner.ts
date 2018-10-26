@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import fs from "fs";
-import Tokenizer from "./tokenizer";
+import Tokenizer, {ITokenizeResult} from "./tokenizer";
+import Parser, {IParsedTree} from "./parser";
 
 const args: string[] = [...process.argv];
 
@@ -14,9 +15,23 @@ if (!fs.existsSync(targetFile)) {
     process.exit();
 }
 
-console.log(targetFile);
-
 const code: string = fs.readFileSync(targetFile).toString();
 const tokenizer = new Tokenizer(code);
+const tokenizeResult: ITokenizeResult = tokenizer.tokenize();
 
-console.log(tokenizer.tokenize());
+if (tokenizeResult.errors.length > 0) {
+    console.log(tokenizeResult.errors);
+
+    process.exit(1);
+}
+
+const parser: Parser = new Parser(tokenizeResult.tokens);
+const parsedTree: IParsedTree = parser.parse();
+
+if (parsedTree.errors.length > 0) {
+    console.log(parsedTree.errors);
+
+    process.exit(1);
+}
+
+console.log(JSON.stringify(parsedTree.tree.getTree()));

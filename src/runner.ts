@@ -20,6 +20,7 @@ const tokenizer = new Tokenizer(code);
 const tokenizeResult: ITokenizeResult = tokenizer.tokenize();
 
 if (tokenizeResult.errors.length > 0) {
+    console.log("Failed on tokenization\n");
     console.log(tokenizeResult.errors);
 
     process.exit(1);
@@ -29,6 +30,7 @@ const parser: Parser = new Parser(tokenizeResult.tokens);
 const parsedTree: IParsedTree = parser.parse();
 
 if (parsedTree.errors.length > 0) {
+    console.log("Failed on parsing\n");
     console.log(parsedTree.errors);
 
     process.exit(1);

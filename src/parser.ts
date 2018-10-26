@@ -91,8 +91,9 @@ export default class Parser {
                         this.skip();
                     }
                     else {
+                        // TODO: Use warnings for this
                         errors.push(this.createSyntaxError({
-                            message: `Identifier '${this.$.value}' is not defined`
+                            message: `Identifier '${this.$.value}' is redundant`
                         }));
                     }
 
@@ -124,6 +125,12 @@ export default class Parser {
                         this.tree.parent();
 
                         break;
+                    }
+                }
+
+                case TokenType.Comma: {
+                    if (this.switches.functionCallExpectingEnd) {
+                        this.tree.parent();
                     }
                 }
 

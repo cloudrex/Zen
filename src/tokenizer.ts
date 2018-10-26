@@ -20,6 +20,7 @@ export type ITokenizeResult = {
 }
 
 export enum TokenMatch {
+    // Grammar
     StringLiteralQuote = "\"",
     NewLine = "\n",
     SemiColon = ";",
@@ -29,6 +30,11 @@ export enum TokenMatch {
     ParenthesesStart = "(",
     ParenthesesEnd = ")",
     SingleLineComment = "//",
+    Comma = ",",
+    BracketStart = "[",
+    BracketEnd = "]",
+    Colon = ":",
+    Dot = ".",
 
     // Operators
     AdditionOperator = "+",
@@ -49,8 +55,6 @@ export enum TokenMatch {
     LogicalAndOperator = "&&",
     LogicalOrOperator = "||",
     LogicalNotOperator = "!",
-    BracketStart = "[",
-    BracketEnd = "]",
 
     // Keywords
     FunctionKeyword = "function",
@@ -155,6 +159,24 @@ export default class Tokenizer {
 
                 case TokenMatch.BracketEnd: {
                     tokens.push(this.createToken(TokenType.BracketEnd));
+
+                    break;
+                }
+
+                case TokenMatch.Comma: {
+                    tokens.push(this.createToken(TokenType.Comma));
+
+                    break;
+                }
+
+                case TokenMatch.Colon: {
+                    tokens.push(this.createToken(TokenType.Colon));
+
+                    break;
+                }
+
+                case TokenMatch.Dot: {
+                    tokens.push(this.createToken(TokenType.Dot));
 
                     break;
                 }

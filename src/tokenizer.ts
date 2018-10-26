@@ -339,7 +339,7 @@ export default class Tokenizer {
                 return collection;
             }
             else if (counter + 1 >= this.input.length && !returnOnEnd) {
-                throw this.expecting("match before end of file");
+                throw new Error("Expecting match before end of file");
             }
 
             counter++;
@@ -358,8 +358,9 @@ export default class Tokenizer {
             if (counter + 1 >= this.input.length && returnOnEnd) {
                 return collection;
             }
+            // TODO:
             else if (counter + 1 >= this.input.length && !returnOnEnd) {
-                throw this.expecting(`"character '${match}' before end of file`);
+                throw new Error(`Expecting character '${match}' before end of file`);
             }
 
             counter++;

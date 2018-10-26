@@ -1,7 +1,7 @@
 export enum TokenType {
     Quote,
-    BracketLeft,
-    BracketRight,
+    BracketStart,
+    BracketEnd,
     BraceLeft,
     BraceRight,
     ParenthesesStart,

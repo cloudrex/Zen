@@ -49,6 +49,8 @@ export enum TokenMatch {
     LogicalAndOperator = "&&",
     LogicalOrOperator = "||",
     LogicalNotOperator = "!",
+    BracketStart = "[",
+    BracketEnd = "]",
 
     // Keywords
     FunctionKeyword = "function",
@@ -141,6 +143,18 @@ export default class Tokenizer {
                         tokens.push(this.createToken(TokenType.Quote, value, this.pos + value.length + 1));
                         this.skip(value.length + 2);
                     }
+
+                    break;
+                }
+
+                case TokenMatch.BracketStart: {
+                    tokens.push(this.createToken(TokenType.BracketStart));
+
+                    break;
+                }
+
+                case TokenMatch.BracketEnd: {
+                    tokens.push(this.createToken(TokenType.BracketEnd));
 
                     break;
                 }

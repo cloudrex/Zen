@@ -22,7 +22,7 @@ export type ISyntaxNodeValue = string | number | any | undefined;
 
 export type ISyntaxNode = {
     readonly type: SyntaxNodeType;
-    readonly name: SyntaxNodeType | string;
+    readonly name: SpecialSyntaxNodes | string;
     readonly position: number;
 
     value: ISyntaxNodeValue;
@@ -34,6 +34,7 @@ export default class SyntaxTree extends EventEmitter implements IDisposable {
 
     private currentNode: ISyntaxNode;
     private size: number;
+    private rootParentCounter: number;
 
     public constructor() {
         super();
@@ -41,11 +42,12 @@ export default class SyntaxTree extends EventEmitter implements IDisposable {
         this.tree = SyntaxTree.createEmptyNode(SyntaxNodeType.Root, SpecialSyntaxNodes.Root, -1);
         this.currentNode = this.tree;
         this.path = [this.currentNode];
+        this.rootParentCounter = 0;
         this.size = 0;
     }
 
     public onRoot(): boolean {
-        return this.currentNode.type === SyntaxNodeType.Root;
+        return this.currentNode.type === SyntaxNodeType.Root && this.currentNode.name === SpecialSyntaxNodes.Root;
     }
 
     public getParent(): ISyntaxNode {
@@ -90,6 +92,52 @@ export default class SyntaxTree extends EventEmitter implements IDisposable {
         this.currentNode = this.getParent();
         this.emit(SyntaxTreeEvent.NodeChange, this.currentNode);
         this.removeLastPath();
+
+        return this;
+    }
+
+    public lastNodeOnParent(): boolean {
+        if (this.getCurrent().name === SpecialSyntaxNodes.Root) {
+            throw new Error("[SyntaxTree.lastNodeOnParent] Cannot determine last node on the parent node");
+        }
+
+        const parent: ISyntaxNode = this.getParent();
+
+        if (!SyntaxTree.isTree(parent)) {
+            throw new Error("[SyntaxTree.nextNode] Cannot get next node since parent is not a tree");
+        }
+
+        const keys: string[] = Object.keys(parent.value);
+
+        if (keys.indexOf(this.getCurrent().name) + 1 >= keys.length) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public cycleParent(): this {
+        if (!this.onRoot() && !this.parentIsRoot() && this.lastNodeOnParent()) {
+            this.parent().parent();
+        }
+
+        return this;
+    }
+
+    public parentIsRoot(): boolean {
+        if (this.onRoot()) {
+            throw new Error("[SyntaxTree.parentIsRoot] Cannot determine if parent is root node on the root node");
+        }
+
+        const parent: ISyntaxNode = this.getParent();
+
+        return parent.name === SpecialSyntaxNodes.Root && parent.type === SyntaxNodeType.Root;
+    }
+
+    public tryParent(): this {
+        if (!this.onRoot()) {
+            this.parent();
+        }
 
         return this;
     }

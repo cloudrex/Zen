@@ -7,6 +7,18 @@ export type IToken = {
     readonly end: number;
 }
 
+export type ISyntaxError = {
+    readonly message: string;
+    readonly line: number;
+    readonly character: number;
+    readonly position: number;
+}
+
+export type ITokenizeResult = {
+    readonly tokens: IToken[];
+    readonly errors: ISyntaxError[];
+}
+
 export enum TokenMatch {
     StringLiteralQuote = "\"",
     NewLine = "\n",
@@ -75,16 +87,25 @@ export default class Tokenizer {
     private readonly input: string;
 
     private pos: number;
+    private line: number;
+    private character: number;
 
     public constructor(input: string) {
         this.input = input;
         this.pos = 0;
+        this.line = 0;
+        this.character = 0;
     }
 
-    public tokenize(): IToken[] {
+    public tokenize(): ITokenizeResult {
         const tokens: IToken[] = [];
+        const errors: ISyntaxError[] = [];
 
-        for (this.pos = 0; this.pos < this.input.length; this.pos++) {
+        // Reset
+        this.line = 0;
+        this.character = 0;
+
+        for (this.pos = 0; this.pos < this.input.length; this.pos++, this.character++) {
             switch (this.$) {
                 case TokenMatch.BraceStart: {
                     tokens.push(this.createToken(TokenType.BlockStart));
@@ -114,17 +135,20 @@ export default class Tokenizer {
                     const value: string | null = this.collectUntilExpression($quoteBody, false, this.pos + 1);
 
                     if (value === null) {
-                        throw this.expecting("End of quote body");
+                        errors.push(this.expecting("End of quote body"));
                     }
-
-                    tokens.push(this.createToken(TokenType.Quote, value, this.pos + value.length + 1));
-                    this.skip(value.length + 2);
+                    else {
+                        tokens.push(this.createToken(TokenType.Quote, value, this.pos + value.length + 1));
+                        this.skip(value.length + 2);
+                    }
 
                     break;
                 }
 
                 case TokenMatch.NewLine: {
                     tokens.push(this.createToken(TokenType.NewLine));
+                    this.line++;
+                    this.character = 0;
 
                     break;
                 }
@@ -223,26 +247,33 @@ export default class Tokenizer {
                         const value: string | null = this.collectUntilExpression($identifier, false, this.pos, true);
 
                         if (value === null) {
-                            throw new Error("Unexpected end of file (collecting entity)");
+                            errors.push(this.createSyntaxError({
+                                message: "Unexpected end of file (collecting entity)"
+                            }));
                         }
-
-                        tokens.push(this.createToken(TokenType.Idenfitier, value, this.pos + value.length));
-                        this.skip(value.length);
+                        else {
+                            tokens.push(this.createToken(TokenType.Idenfitier, value, this.pos + value.length));
+                            this.skip(value.length);
+                        }
                     }
                     else {
-                        // TODO: Collect errors instead
-                        throw new Error(`Unexpected character: ${this.$}`);
+                        errors.push(this.createSyntaxError({
+                            message: `Unexpected character: ${this.$}`
+                        }));
                     }
                 }
             }
         }
 
-        return tokens;
+        return {
+            tokens,
+            errors
+        };
     }
 
     private matchToken(token: TokenMatch): boolean {
         if (token.length > 1) {
-            return token === this.forward(token.length);
+            return token + " " === this.forward(token.length + 1);
         }
 
         return token === this.$;
@@ -266,8 +297,26 @@ export default class Tokenizer {
         return collection;
     }
 
-    private expecting(message: string, position: number = this.pos): Error {
-        return new Error(`Expecting ${message} | Position ${position}`);
+    private createSyntaxError(options: Partial<ISyntaxError>): ISyntaxError {
+        if (!options.message) {
+            throw new Error("[Tokenizer.createSyntaxError] Options must contain message");
+        }
+
+        return {
+            character: options.character || this.character,
+            line: options.line || this.line,
+            message: options.message,
+            position: options.position || this.pos
+        };
+    }
+
+    private expecting(message: string, position: number = this.pos, line: number = this.line, character: number = this.character): ISyntaxError {
+        return {
+            message: `Expecting ${message} | Position ${position}`,
+            character,
+            line,
+            position
+        };
     }
 
     private skip(characters: number = 1, offset: number = -1): this {

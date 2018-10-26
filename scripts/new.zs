@@ -1,3 +1,1 @@
-if (something = true) {
-    !(hello)   
-}
+function a(){}

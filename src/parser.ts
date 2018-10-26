@@ -14,7 +14,7 @@ type ParserSwitches = {
     functionBody: boolean;
 
     // Function call
-    functionCallExpectingEnd: boolean;
+    functionCallExpectingEnd: number;
 }
 
 export default class Parser {
@@ -35,7 +35,7 @@ export default class Parser {
             functionBody: false,
 
             // Function call
-            functionCallExpectingEnd: false
+            functionCallExpectingEnd: 0
         };
 
         this.index = 0;
@@ -87,7 +87,7 @@ export default class Parser {
                     }
                     else if (this.next().type === TokenType.ParenthesesStart) {
                         this.tree.setChildAndNav(this.$.value as string, SyntaxTree.createEmptyNode(SyntaxNodeType.FunctionCall, this.$.value as string, this.index));
-                        this.switches.functionCallExpectingEnd = true;
+                        this.switches.functionCallExpectingEnd++;
                         this.skip();
                     }
                     else {
@@ -102,8 +102,8 @@ export default class Parser {
 
                 case TokenType.ParenthesesEnd: {
                     if (this.switches.functionCallExpectingEnd) {
-                        this.switches.functionCallExpectingEnd = false;
-                        this.tree.parent();
+                        this.switches.functionCallExpectingEnd--;
+                        //this.tree.parent();
 
                         break;
                     }
@@ -131,6 +131,10 @@ export default class Parser {
                 case TokenType.Comma: {
                     if (this.switches.functionCallExpectingEnd) {
                         this.tree.parent();
+                        // TODO: Bug with 'a(b(c()), d())' d() will be inside b(), probably caused here
+                        this.switches.functionCallExpectingEnd--;
+
+                        break;
                     }
                 }
 

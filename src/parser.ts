@@ -38,7 +38,19 @@ export default class Parser {
                 }
 
                 case TokenType.FunctionKeyword: {
-                    
+                    if (this.declaringFunction()) {
+                        this.appendError({
+                            message: "Nested functions are not supported"
+                        });
+                    }
+                    else {
+                        this.tree.setChildAndNav("function", {
+                            name: "function",
+                            position: this.index,
+                            type: SyntaxNodeType.Function,
+                            value: {}
+                        });
+                    }
 
                     break;
                 }
@@ -49,12 +61,50 @@ export default class Parser {
                     break;
                 }
 
+                case TokenType.ParenthesesStart: {
+                    if (!this.containsAfter(TokenType.ParenthesesEnd)) {
+                        this.appendError({
+                            message: "Unterminated statement; Expecting ')'"
+                        });
+
+                        break;
+                    }
+                    else if (this.declaringFunction()) {
+                        const tokensInBetween: IToken [] | null = this.getUntilAbsolute(TokenType.ParenthesesEnd);
+
+                        if (tokensInBetween === null) {
+                            this.appendError({
+                                message: "Unexpected tokens caught"
+                            });
+
+                            break;
+                        }
+
+                        const children: ISyntaxNode[] = new Parser(tokensInBetween).parse().tree.getChildren();
+
+                        for (let i = 0; i < children.length; i++) {
+                            this.tree.setChild(children[i].name, children[i]);
+                        }
+
+                        break;
+                    }
+                }
+
                 case TokenType.ParenthesesEnd: {
                     
                 }
 
                 case TokenType.BraceStart: {
-                    
+                    if (!this.containsAfter(TokenType.BraceEnd)) {
+                        this.appendError({
+                            message: "Unterminated statement; Expecting '}'"
+                        })
+                    }
+                    else {
+                        // TODO
+
+                        break;
+                    }
                 }
 
                 case TokenType.BraceEnd: {
@@ -97,8 +147,51 @@ export default class Parser {
         };
     }
 
+    private getUntil(type: TokenType, start: number = this.index): IToken[] | null {
+        const result: IToken[] = [];
+
+        for (let i = start; i < start; i++) {
+            if (this.tokens[i].type === type) {
+                return result;
+            }
+            else {
+                result.push(this.tokens[i]);
+            }
+        }
+
+        return null;
+    }
+
+    private getUntilAbsolute(type: TokenType, start: number = this.index): IToken[] | null {
+        // TODO: Implement
+    }
+
+    private declaringFunction(): boolean {
+        return this.containsBefore(TokenType.FunctionKeyword);
+    }
+
+    private containsBefore(type: TokenType, start: number = this.index): boolean {
+        for (let counter = start; counter > 0; counter--) {
+            if (this.tokens[counter].type === type) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private next(): IToken {
         return this.tokens[this.index + 1];
+    }
+
+    private containsAfter(type: TokenType, start: number = this.index): boolean {
+        for (let counter = start; counter < this.tokens.length; counter++) {
+            if (this.tokens[counter].type === type) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private nextNotNewLine(): IToken {
